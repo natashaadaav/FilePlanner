@@ -10,6 +10,12 @@
 
         BoxLayout:
             orientation: 'vertical'
+            canvas.before:
+                Color:
+                    rgba: (1, 1, 1, 1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
             UserRelativeLayout:
                 size_hint_y: None
                 height: app.file_panel_height
@@ -25,6 +31,10 @@
                     on_scroll_stop: app.on_scroll_up(self)
                     FileLayout
             CalendarLayout
+    DayScreen:
+        id: day_screen
+        name: 'DayScreen'
+        manager: screen_manager
 
 <FileLayout>:
     size_hint: None, None
@@ -35,7 +45,7 @@
     width: max(Window.width, app.get_sum_fwidth() + app.file_panel_padding * (len(app.files) + 1)) #self.width_f = max(Window.width, self.get_sum_fwidth())
     canvas.before:
         Color:
-            rgba: (1,1,1, 1)
+            rgba: (1, 1, 1, 1)
         Rectangle:
             pos: self.pos
             size: self.size
@@ -56,16 +66,161 @@
 
     canvas.before:
         Color:
-            rgba: (0,0,0, .1)
+            rgba: app.main_rgba
         RoundedRectangle:
             pos: self.pos
             size: self.size
             radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
 
 <CalendarLayout>:
+    orientation: 'vertical'
+    padding: app.file_panel_padding
     canvas.before:
         Color:
-            rgba: (1,.8, 1, .7)
+            rgba: app.main_rgba
         Rectangle:
             pos: self.pos
             size: self.size
+    MonthLayout
+    DayGrid
+
+<MonthLayout>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    padding: app.file_panel_padding * 2
+    spacing: app.file_panel_padding
+    height: app.file_panel_height * 1.5
+    Widget:
+        #size_hint_x: None
+        #size_hint_y: None
+        #width: app.file_panel_height
+        #height: app.file_panel_height
+    Widget:
+        size_hint_x: None
+        size_hint_y: None
+        width: app.file_panel_height/1.5
+        height: app.file_panel_height/1.5
+        canvas.before:
+            Color:
+                rgba: (1, 1, 1, 1)
+            Triangle:
+                points:
+                    (self.pos[0] + self.size[0], self.pos[1] + self.size[1], \
+                    self.pos[0], self.pos[1] + self.size[1] / 2, \
+                    self.pos[0] + self.size[0],  self.pos[1])
+    Label:
+        text: 'Март'
+        font_size: 25
+        color: app.accent_rgba
+    Widget:
+        size_hint_x: None
+        size_hint_y: None
+        width: app.file_panel_height/1.5
+        height: app.file_panel_height/1.5
+        canvas.before:
+            Color:
+                rgba: (1, 1, 1, 1)
+            Triangle:
+                points:
+                    (self.pos[0], self.pos[1], \
+                    self.pos[0] + self.size[0], self.pos[1] + self.size[1] / 2, \
+                    self.pos[0],  self.pos[1] + self.size[1])
+    Label:
+        text: '2022'
+        font_size: 25
+        color: app.accent_rgba
+        #size_hint_x: None
+        #width: app.file_panel_height
+
+<DayGrid>:
+    spacing: app.file_panel_padding
+    padding: app.file_panel_padding
+    rows: 6
+    cols: 7
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+    DayLayoutRel
+
+<DayLayoutRel>:
+    ShadowBox
+    DayLayout
+
+<DayLayout>:
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+    Label:
+        text: '1'
+        color: (0,0,0,1)
+    Widget:
+        canvas.before:
+            Color:
+                rgba: app.accent_rgba
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [(0, 0), (5, 5), (5, 5), (0, 0)]
+        canvas.after:
+            Color:
+                rgba: (1, 1, 1, 1)
+            Ellipse:
+                pos: self.pos[0] + self.size[0]/2 - self.size[0]/(2 * 8), self.pos[1] + self.size[1]/2 - self.size[1]/(2 * 8)
+                size: self.size[0]/8, self.size[1]/8
+                #angle_start: e1.value
+                #angle_end: e2.value
+
+<ShadowBox>:
+    canvas.before:
+        Color:
+            rgba: (0, 0, 0, .7)
+        BoxShadow:
+            pos: self.pos[0] + 10, self.pos[1] + 10
+            size: self.size[0] - 20, self.size[1] - 20
+            #offset: 0, -10
+            #spread_radius: -50, -55
+            #border_radius: 5,5,5,5
+            blur_radius: 15
+

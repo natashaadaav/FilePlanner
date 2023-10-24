@@ -3,6 +3,7 @@ import re
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen
 # noinspection PyUnresolvedReferences
@@ -26,8 +27,13 @@ class FileWidget(Button):
         self.width = length
 
 
+m_rgba = (.9, .9, .9, 1)
+a_rgba = (.1, .1, .8, .4)
+
+
 class KivyWidgetInterface:
     ''' interface for  global widget access '''
+
     db = ObjectProperty()
     files = [{'id_file': 2, 'name': '12.txt', 'path': 'desktop/12.txt'},
              {'id_file': 4, 'name': '14.txt', 'path': 'desktop/14.txt'},
@@ -47,6 +53,8 @@ class KivyWidgetInterface:
     file_widget_height = NumericProperty(30)
     file_panel_padding = NumericProperty(10)
     file_panel_height = NumericProperty(30 + 2 * 10)
+    main_rgba = ObjectProperty(m_rgba)
+    accent_rgba = ObjectProperty(a_rgba)
 
     selected_file = None
 
@@ -101,7 +109,7 @@ class KivyWidgetInterface:
         cls.selected_file = obj
         obj.canvas.after.clear()
         with obj.canvas.after:
-            Color(.1, 0, .2, .4)
+            Color(*a_rgba)
             RoundedRectangle(pos=obj.pos,
                              size=obj.size,
                              radius=[(5, 5), (5, 5), (5, 5), (5, 5)])
@@ -113,6 +121,14 @@ class KivyWidgetInterface:
             cls.selected_file.canvas.after.clear()
         cls.selected_file = None
 
+    def next_month(self):
+        print('next')
+
+    def previous_month(self):
+        print('previous')
+
+
+
     # def update_pl(self):
     #     sv = self.get_widget('ScrollV')
     #     pl = sv.children[0]
@@ -123,6 +139,10 @@ class KivyWidgetInterface:
 
 
 class MainScreen(Screen):
+    ...
+
+
+class DayScreen(Screen):
     ...
     # def __init__(self, **kwargs):
     #     super(MainScreen, self).__init__(**kwargs)
@@ -137,6 +157,26 @@ class UserRelativeLayout(RelativeLayout):
 
 
 class CalendarLayout(BoxLayout):
+    ...
+
+
+class MonthLayout(BoxLayout):
+    ...
+
+
+class DayGrid(GridLayout):
+    ...
+
+
+class DayLayout(BoxLayout):
+    ...
+
+
+class DayLayoutRel(RelativeLayout):
+    ...
+
+
+class ShadowBox(Widget):
     ...
 
 
@@ -162,5 +202,38 @@ class CalendarApp(KivyWidgetInterface, App):
         return sm
 
 
+from datetime import date
+import calendar
+
+month_length = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+
+key_array = ('Январь', 'Февраль',
+             'Март', 'Апрель', 'Май',
+             'Июнь', 'Июль', 'Август',
+             'Сентябрь', 'Октябрь', 'Ноябрь',
+             'Декабрь')
+
+
+def print_month(month, year):
+    if month < 1 or month > 12:
+        raise RuntimeError('uncorrected month')
+
+    wd = date(year, month, 1).weekday()
+    days = calendar.mdays[month]
+    if calendar.isleap(year) and month == 2:
+        days += 1
+
+    print(f"{month} {year}".center(20))
+    print("Пн Вт Ср Чт Пт Сб Вс")
+    print('   ' * wd, end='')
+    for day in range(days):
+        wd = (wd + 1) % 7
+        eow = " " if wd % 7 else "\n"
+        print(f"{day + 1:2}", end=eow)
+    print()
+
+
 if __name__ == "__main__":
+    # print_month(2, 2020)
+
     CalendarApp().run()
