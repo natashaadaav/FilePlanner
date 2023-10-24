@@ -127,8 +127,6 @@ class KivyWidgetInterface:
     def previous_month(self):
         print('previous')
 
-
-
     # def update_pl(self):
     #     sv = self.get_widget('ScrollV')
     #     pl = sv.children[0]

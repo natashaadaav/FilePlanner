@@ -95,7 +95,10 @@
         #size_hint_y: None
         #width: app.file_panel_height
         #height: app.file_panel_height
-    Widget:
+    Button:
+        background_normal: ''
+        background_down: ''
+        background_color: (0, 0, 0, 0)
         size_hint_x: None
         size_hint_y: None
         width: app.file_panel_height/1.5
@@ -108,11 +111,15 @@
                     (self.pos[0] + self.size[0], self.pos[1] + self.size[1], \
                     self.pos[0], self.pos[1] + self.size[1] / 2, \
                     self.pos[0] + self.size[0],  self.pos[1])
+        on_release: app.previous_month()
     Label:
         text: 'Март'
         font_size: 25
         color: app.accent_rgba
-    Widget:
+    Button:
+        background_normal: ''
+        background_down: ''
+        background_color: (0, 0, 0, 0)
         size_hint_x: None
         size_hint_y: None
         width: app.file_panel_height/1.5
@@ -125,6 +132,7 @@
                     (self.pos[0], self.pos[1], \
                     self.pos[0] + self.size[0], self.pos[1] + self.size[1] / 2, \
                     self.pos[0],  self.pos[1] + self.size[1])
+        on_release: app.next_month()
     Label:
         text: '2022'
         font_size: 25
