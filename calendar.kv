@@ -1,0 +1,71 @@
+#: import Window kivy.core.window.Window
+
+<Manager>:
+    id: screen_manager
+    main_screen: main_screen
+    MainScreen:
+        id: main_screen
+        name: 'MainScreen'
+        manager: screen_manager
+
+        BoxLayout:
+            orientation: 'vertical'
+            UserRelativeLayout:
+                size_hint_y: None
+                height: app.file_panel_height
+                id: file_panel
+                ScrollV:
+                    gid: 'ScrollV'
+                    register_method: app.register_widget(self)
+                    id: scroll_area
+                    size_hint_x: 1 #1 - app.main_size_small * 2
+                    do_scroll_y: False
+                    do_scroll_x: True
+                    scroll_type: ['bars', 'content']
+                    on_scroll_stop: app.on_scroll_up(self)
+                    FileLayout
+            CalendarLayout
+
+<FileLayout>:
+    size_hint: None, None
+    padding: app.file_panel_padding
+    spacing: app.file_panel_padding
+    height: app.file_panel_height
+
+    width: max(Window.width, app.get_sum_fwidth() + app.file_panel_padding * (len(app.files) + 1)) #self.width_f = max(Window.width, self.get_sum_fwidth())
+    canvas.before:
+        Color:
+            rgba: (1,1,1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<FileWidget>:
+    size_hint_y: None
+    size_hint_x: None
+    height: app.file_widget_height
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    color: (0, 0, 0)
+
+    #on_press:
+    on_release: app.select_file(self)
+
+
+    canvas.before:
+        Color:
+            rgba: (0,0,0, .1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+
+<CalendarLayout>:
+    canvas.before:
+        Color:
+            rgba: (1,.8, 1, .7)
+        Rectangle:
+            pos: self.pos
+            size: self.size
