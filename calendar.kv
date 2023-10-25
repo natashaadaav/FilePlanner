@@ -1,40 +1,27 @@
 #: import Window kivy.core.window.Window
 
 <Manager>:
+    gid: 'Manager'
+    register_method: app.register_widget(self)
     id: screen_manager
     main_screen: main_screen
     MainScreen:
+        gid: 'MainScreen'
+        register_method: app.register_widget(self)
         id: main_screen
         name: 'MainScreen'
         manager: screen_manager
 
-        BoxLayout:
-            orientation: 'vertical'
-            canvas.before:
-                Color:
-                    rgba: (1, 1, 1, 1)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            UserRelativeLayout:
-                size_hint_y: None
-                height: app.file_panel_height
-                id: file_panel
-                ScrollV:
-                    gid: 'ScrollV'
-                    register_method: app.register_widget(self)
-                    id: scroll_area
-                    size_hint_x: 1 #1 - app.main_size_small * 2
-                    do_scroll_y: False
-                    do_scroll_x: True
-                    scroll_type: ['bars', 'content']
-                    on_scroll_stop: app.on_scroll_up(self)
-                    FileLayout
-            CalendarLayout
+        MainBox
+
+
     DayScreen:
+        gid: 'DayScreen'
+        register_method: app.register_widget(self)
         id: day_screen
         name: 'DayScreen'
         manager: screen_manager
+
 
 <FileLayout>:
     size_hint: None, None
@@ -59,11 +46,7 @@
     background_down: ''
     background_color: (0, 0, 0, 0)
     color: (0, 0, 0)
-
-    #on_press:
     on_release: app.select_file(self)
-
-
     canvas.before:
         Color:
             rgba: app.main_rgba
@@ -73,6 +56,8 @@
             radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
 
 <CalendarLayout>:
+    gid: 'CalendarLayout'
+    register_method: app.register_widget(self)
     orientation: 'vertical'
     padding: app.file_panel_padding
     canvas.before:
@@ -83,6 +68,7 @@
             size: self.size
     MonthLayout
     DayGrid
+
 
 <MonthLayout>:
     orientation: 'horizontal'
@@ -113,8 +99,8 @@
                     self.pos[0] + self.size[0],  self.pos[1])
         on_release: app.previous_month()
     Label:
-        text: 'Март'
-        font_size: 25
+        text: app.current_month_text
+        font_size: Window.height/25
         color: app.accent_rgba
     Button:
         background_normal: ''
@@ -134,65 +120,35 @@
                     self.pos[0],  self.pos[1] + self.size[1])
         on_release: app.next_month()
     Label:
-        text: '2022'
-        font_size: 25
+        text: app.current_year
+        font_size: Window.height/25
         color: app.accent_rgba
         #size_hint_x: None
         #width: app.file_panel_height
 
 <DayGrid>:
+    gid: 'DayGrid'
+    register_method: app.register_widget(self)
     spacing: app.file_panel_padding
     padding: app.file_panel_padding
-    rows: 6
+    rows: 7
     cols: 7
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
-    DayLayoutRel
 
 <DayLayoutRel>:
     ShadowBox
-    DayLayout
+    #DayLayout:
+    #    date: self.parent.day
+    #    files: self.parent.files
+
+<DayLabel>:
+    color: app.accent_rgba
+    font_size: Window.height/30
 
 <DayLayout>:
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    on_release: app.select_day(self.parent)
     canvas.before:
         Color:
             rgba: (1, 1, 1, 1)
@@ -201,24 +157,23 @@
             size: self.size
             radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
     Label:
-        text: '1'
-        color: (0,0,0,1)
+        text: self.parent.day
+        color: (0, 0, 0, 1)
     Widget:
         canvas.before:
             Color:
-                rgba: app.accent_rgba
+                rgba: app.accent_rgba if self.parent.files else (0, 0, 0, 0)
             RoundedRectangle:
                 pos: self.pos
                 size: self.size
                 radius: [(0, 0), (5, 5), (5, 5), (0, 0)]
         canvas.after:
             Color:
-                rgba: (1, 1, 1, 1)
+                rgba: (1, 1, 1, 1) if self.parent.files else (0, 0, 0, 0)
             Ellipse:
                 pos: self.pos[0] + self.size[0]/2 - self.size[0]/(2 * 8), self.pos[1] + self.size[1]/2 - self.size[1]/(2 * 8)
                 size: self.size[0]/8, self.size[1]/8
-                #angle_start: e1.value
-                #angle_end: e2.value
+
 
 <ShadowBox>:
     canvas.before:
@@ -232,3 +187,110 @@
             #border_radius: 5,5,5,5
             blur_radius: 15
 
+
+<ClosePopupButton>:
+    text: 'Назад'
+    color: app.accent_rgba
+    font_size: self.height/3
+    size_hint_y: None
+    height: app.file_panel_height
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+
+<RunPopupButton>:
+    text: 'Сохранить'
+    color: app.accent_rgba
+    font_size: self.height/3
+    size_hint_y: None
+    height: app.file_panel_height
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+
+<ModalViewAdd>:
+    padding: 0
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    overlay_color: (0, 0, 0, 0)
+    size_hint: (.5, .5)
+    canvas.before:
+        Color:
+            rgba: (0, 0, 0, .7)
+        BoxShadow:
+            pos: self.pos[0] + 10, self.pos[1] + 10
+            size: self.size[0] - 20, self.size[1] - 20
+            blur_radius: 20
+
+    #canvas:
+    #    Color:
+    #        rgba: (1, 1, 1, 1)
+    #    RoundedRectangle:
+    #        pos: self.pos
+    #        size: self.size
+    #        radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+
+
+
+<PopupLayout>
+    orientation: 'vertical'
+    spacing: app.file_panel_padding
+    padding: app.file_panel_padding
+
+    canvas.before:
+        Color:
+            rgba: app.main_rgba
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
+
+
+<ButtonLayout>
+    orientation: 'horizontal'
+    spacing: app.file_panel_padding
+    padding: app.file_panel_padding
+
+
+<PopupLabel>:
+    color: app.accent_rgba
+    font_size: Window.height/30
+    halign: 'center'
+    valign: 'middle'
+
+<MainBox>:
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    UserRelativeLayout:
+        size_hint_y: None
+        height: app.file_panel_height
+        id: file_panel
+        ScrollV:
+            id: scroll_area
+            size_hint_x: 1 #1 - app.main_size_small * 2
+            do_scroll_y: False
+            do_scroll_x: True
+            scroll_type: ['bars', 'content']
+            on_scroll_stop: app.on_scroll_up(self)
+            FileLayout
+    CalendarLayout
