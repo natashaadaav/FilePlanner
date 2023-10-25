@@ -1,3 +1,4 @@
+import datetime
 from sqlite3 import connect
 import os
 from typing import List, Tuple, Literal, Union
@@ -71,7 +72,7 @@ class DbManager:
                 cur.execute("create table file_date "
                             "( id integer constraint files_pk primary key autoincrement, "
                             "id_file integer not null, "
-                            "fix_date  date  not null, "
+                            "fix_date  text  not null, "
                             "priority  integer default 1 not null)")
         else:
             con = connect(db_path)
@@ -117,21 +118,42 @@ class DbManager:
             return cur.fetchall()
 
     def get_days_info(self, month: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                                           '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                                           '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-                      year: Union[str, int]):
+    '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+                      year: Union[str, int], day: Union[str, int, None] = None, priority: bool = False):
         month = f'{month:0>2}'
         year = str(year)
-        print(month, year)
         with self.con:
             cur = self.con.cursor()
+            if day:
+                day = f'{day:0>2}'
+                if priority:
+                    cur.execute("select max(priority) as m_priority from file_date "
+                                "where strftime('%Y-%m-%d', fix_date) = :date",
+                                {'date': f'{year}-{month}-{day}'})
+                    return cur.fetchone()
+                cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
+                            "from file_date left join files using (id_file) "
+                            "where strftime('%Y-%m-%d', fix_date) = :date order by fix_date",
+                            {'date': f'{year}-{month}-{day}'})
+                return cur.fetchall()
             cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
                         "from file_date left join files using (id_file) "
                         "where strftime('%m.%Y', fix_date) = :date order by fix_date", {'date': month + '.' + year})
-            print(cur.description)
             return cur.fetchall()
 
         # self.sys_files
+
+    def add_new_days_file(self, date, file: dict):
+        d = datetime.datetime.strptime(date, '%Y-%m-%d').timetuple()
+        mon = d.tm_mon
+        m_priority = self.get_days_info(mon, d.tm_year, d.tm_mday, priority=True)
+        m_priority = m_priority['m_priority'] if m_priority and m_priority['m_priority'] else 0
+        with self.con:
+            cur = self.con.cursor()
+            cur.execute('insert into file_date (id_file, fix_date, priority) values (?, ?, ?)',
+                        (file.id_file, date, m_priority + 1))
+        return self.get_days_info(mon, d.tm_year, d.tm_mday)
 
 #
 

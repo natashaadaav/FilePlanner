@@ -57,11 +57,7 @@
     background_down: ''
     background_color: (0, 0, 0, 0)
     color: (0, 0, 0)
-
-    #on_press:
     on_release: app.select_file(self)
-
-
     canvas.before:
         Color:
             rgba: app.main_rgba
@@ -83,6 +79,7 @@
             size: self.size
     MonthLayout
     DayGrid
+
 
 <MonthLayout>:
     orientation: 'horizontal'
@@ -113,7 +110,7 @@
                     self.pos[0] + self.size[0],  self.pos[1])
         on_release: app.previous_month()
     Label:
-        text: 'Март'
+        text: app.current_month_text
         font_size: Window.height/25
         color: app.accent_rgba
     Button:
@@ -134,7 +131,7 @@
                     self.pos[0],  self.pos[1] + self.size[1])
         on_release: app.next_month()
     Label:
-        text: '2022'
+        text: app.current_year
         font_size: Window.height/25
         color: app.accent_rgba
         #size_hint_x: None
@@ -147,152 +144,12 @@
     padding: app.file_panel_padding
     rows: 7
     cols: 7
-    DayLabel:
-        text: 'Пн'
-    DayLabel:
-        text: 'Вт'
-    DayLabel:
-        text: 'Ср'
-    DayLabel:
-        text: 'Чт'
-    DayLabel:
-        text: 'Пт'
-    DayLabel:
-        text: 'Сб'
-    DayLabel:
-        text: 'Вс'
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
-    DayLayoutRel:
-        date: '1'
-        files: []
 
 <DayLayoutRel>:
     ShadowBox
-    DayLayout:
-        date: self.parent.date
-        files: self.parent.files
+    #DayLayout:
+    #    date: self.parent.day
+    #    files: self.parent.files
 
 <DayLabel>:
     color: app.accent_rgba
@@ -311,7 +168,7 @@
             size: self.size
             radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
     Label:
-        text: self.parent.date
+        text: self.parent.day
         color: (0, 0, 0, 1)
     Widget:
         canvas.before:

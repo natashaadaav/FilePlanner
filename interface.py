@@ -1,7 +1,11 @@
 import re
+from typing import Union
+from datetime import date
+import calendar
 
 from kivy.app import App
 from kivy.core.window import Window
+from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -16,6 +20,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.relativelayout import RelativeLayout
+from manager import DbManager
 
 
 class FileWidget(Button):
@@ -30,49 +35,66 @@ class FileWidget(Button):
 
 
 class DayLayout(Button, BoxLayout):
-    date = StringProperty()
+    day = StringProperty()
     files = ObjectProperty()
 
-    def __init__(self, date_='', files_=None, **kwargs):
+    def __init__(self, day_='', files_=None, **kwargs):
         super().__init__(**kwargs)
         if files_ is None:
             files_ = []
-        self.date = date_
+        self.day = day_
         self.files = files_
 
 
 class DayLayoutRel(RelativeLayout):
     date = StringProperty()
+    day = StringProperty()
     files = ObjectProperty()
 
-    def __init__(self, date_='', files_=None, **kwargs):
+    def __init__(self, day_='', date_='', files_=None, **kwargs):
         super().__init__(**kwargs)
         if files_ is None:
             files_ = []
         self.date = date_
+        self.day = day_
         self.files = files_
+        self.add_widget(DayLayout(day_=self.day, files_=self.files))
 
 
 m_rgba = (.9, .9, .9, 1)
 a_rgba = (.1, .1, .8, .4)
+db_manager = DbManager()
+db_files = db_manager.get_files_info()
+# db_files = [FileWidget(f, length=0) for f in db_files]
+# fw = FileWidget(f, length=self.get_fwidth(f['name']))
+
+key_array = ('Январь', 'Февраль',
+             'Март', 'Апрель', 'Май',
+             'Июнь', 'Июль', 'Август',
+             'Сентябрь', 'Октябрь', 'Ноябрь',
+             'Декабрь')
 
 
 class KivyWidgetInterface:
     ''' interface for  global widget access '''
 
-    db = ObjectProperty()
-    files = [{'id_file': 2, 'name': '12.txt', 'path': 'desktop/12.txt'},
-             {'id_file': 4, 'name': '14.txt', 'path': 'desktop/14.txt'},
-             {'id_file': 4, 'name': '14 .txt', 'path': 'desktop/14.txt'},
-             {'id_file': 4, 'name': '24.txt', 'path': 'desktop/14.txt'},
-             {'id_file': 4, 'name': '24 .txt', 'path': 'desktop/14.txt'},
-             {'id_file': 5, 'name': '15.txt', 'path': 'desktop/15.txt'},
-             {'id_file': 6, 'name': '16.txt', 'path': 'desktop/16.txt'},
-             {'id_file': 8, 'name': 'abobabobbababa.txt', 'path': 'desktop/abobabobbababa.txt'},
-             {'id_file': 9, 'name': 'abobabo jkds sdfkj .dfg. drg bbababa.txt',
-              'path': 'desktop/abobabo jkds sdfkj .dfg. drg bbababa.txt'},
-             {'id_file': 7, 'name': '17.txt', 'path': 'desktop/17.txt'}]  # from db
-    kf = 8
+    db = db_manager
+    current_month = '10'  # todo инициализация now()
+    current_year = '2023'  # todo инициализация now()
+    current_month_text = key_array[10 - 1]
+    files = db_files
+    # files = [{'id_file': 2, 'name': '12.txt', 'path': 'desktop/12.txt'},
+    #          {'id_file': 4, 'name': '14.txt', 'path': 'desktop/14.txt'},
+    #          {'id_file': 4, 'name': '14 .txt', 'path': 'desktop/14.txt'},
+    #          {'id_file': 4, 'name': '24.txt', 'path': 'desktop/14.txt'},
+    #          {'id_file': 4, 'name': '24 .txt', 'path': 'desktop/14.txt'},
+    #          {'id_file': 5, 'name': '15.txt', 'path': 'desktop/15.txt'},
+    #          {'id_file': 6, 'name': '16.txt', 'path': 'desktop/16.txt'},
+    #          {'id_file': 8, 'name': 'abobabobbababa.txt', 'path': 'desktop/abobabobbababa.txt'},
+    #          {'id_file': 9, 'name': 'abobabo jkds sdfkj .dfg. drg bbababa.txt',
+    #           'path': 'desktop/abobabo jkds sdfkj .dfg. drg bbababa.txt'},
+    #          {'id_file': 7, 'name': '17.txt', 'path': 'desktop/17.txt'}]  # from db
+    kf = 8.3
     standard_background_color = ObjectProperty()
     global_widgets = {}
     name_app = StringProperty("Calendar")
@@ -139,7 +161,24 @@ class KivyWidgetInterface:
             RoundedRectangle(pos=obj.pos,
                              size=obj.size,
                              radius=[(5, 5), (5, 5), (5, 5), (5, 5)])
-        print(cls.selected_file.text)
+        # print(cls.selected_file.text)
+
+    @classmethod
+    def search_file_dict(cls, id_file: Union[int, list]) -> list:
+        if not id_file:
+            return []
+        if isinstance(id_file, list):
+            result = []
+            for f in cls.files:
+                if f['id_file'] in id_file:
+                    result.append(f)
+
+            return result
+        else:
+            for f in cls.files:
+                if f['id_file'] == id_file:
+                    return [f]
+        return []
 
     @classmethod
     def select_day(cls, obj: DayLayoutRel):
@@ -170,10 +209,18 @@ class KivyWidgetInterface:
     def update_day(cls, file_, day_: DayLayoutRel, dialog: Popup):
         dialog.dismiss()
         cls.deactivate_file()
-        day_.files.append(file_)
-        date_ = day_.date
+        # self.id_file = fconfiguration['id_file']
+        #         self.name = fconfiguration['name']
+        #         self.path = fconfiguration['path']
+        day_.files.append({
+            'id_file': file_.id_file,
+            'name': file_.name,
+            'path': file_.path,
+        })
+        date_ = day_.day
         files_ = day_.files
-        # todo save db
+        new_files = cls.db.add_new_days_file(day_.date, file_)
+        # todo update interface
         for child in day_.children:
             cls.clear_recursive(child)
         day_.add_widget(DayLayout(date_, files_))
@@ -244,8 +291,10 @@ class UserRelativeLayout(RelativeLayout):
     id = ObjectProperty('relative_layout')
 
 
-class CalendarLayout(BoxLayout, KivyWidgetInterface):
-    ...
+class CalendarLayout(KivyWidgetInterface, BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # self.add_widget(DayGrid())
 
 
 class MonthLayout(BoxLayout):
@@ -272,9 +321,28 @@ class ButtonLayout(BoxLayout):
     ...
 
 
-class DayGrid(GridLayout, KivyWidgetInterface):
+class DayGrid(KivyWidgetInterface, GridLayout):
     def __init__(self, **kwargs):
-        super(DayGrid, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+        # print(self.db.get_days_info(self.current_month, self.current_year))
+
+        for i in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
+            self.add_widget(DayLabel(text=i))
+
+        month = int(self.current_month)
+        year = int(self.current_year)
+        wd = date(year, month, 1).weekday()
+        days = calendar.mdays[month]
+        if calendar.isleap(year) and month == 2:
+            days += 1
+        for day in range(wd):
+            self.add_widget(Label(text=''))
+        for day in range(days):
+            wd = (wd + 1) % 7
+            # days_files = [f['id_file'] for f in self.db.get_files_info()]
+            days_files = [f['id_file'] for f in self.db.get_days_info(month, year, day + 1)]
+            files_list = self.search_file_dict(days_files)
+            self.add_widget(DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list))
 
 
 class ShadowBox(Widget):
@@ -285,7 +353,8 @@ class FileLayout(BoxLayout, KivyWidgetInterface):
     def __init__(self, **kwargs):
         super(FileLayout, self).__init__(**kwargs)
         for f in self.files:
-            self.add_widget(FileWidget(f, length=self.get_fwidth(f['name'])))
+            fw = FileWidget(f, length=self.get_fwidth(f['name']))
+            self.add_widget(fw)
 
 
 class Manager(ScreenManager):
@@ -303,35 +372,26 @@ class CalendarApp(KivyWidgetInterface, App):
         return sm
 
 
-from datetime import date
-import calendar
-
 month_length = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
-key_array = ('Январь', 'Февраль',
-             'Март', 'Апрель', 'Май',
-             'Июнь', 'Июль', 'Август',
-             'Сентябрь', 'Октябрь', 'Ноябрь',
-             'Декабрь')
 
-
-def print_month(month, year):
-    if month < 1 or month > 12:
-        raise RuntimeError('uncorrected month')
-
-    wd = date(year, month, 1).weekday()
-    days = calendar.mdays[month]
-    if calendar.isleap(year) and month == 2:
-        days += 1
-
-    print(f"{month} {year}".center(20))
-    print("Пн Вт Ср Чт Пт Сб Вс")
-    print('   ' * wd, end='')
-    for day in range(days):
-        wd = (wd + 1) % 7
-        eow = " " if wd % 7 else "\n"
-        print(f"{day + 1:2}", end=eow)
-    print()
+# def print_month(month, year):
+#     if month < 1 or month > 12:
+#         raise RuntimeError('uncorrected month')
+#
+#     wd = date(year, month, 1).weekday()
+#     days = calendar.mdays[month]
+#     if calendar.isleap(year) and month == 2:
+#         days += 1
+#
+#     print(f"{month} {year}".center(20))
+#     print("Пн Вт Ср Чт Пт Сб Вс")
+#     print('   ' * wd, end='')
+#     for day in range(days):
+#         wd = (wd + 1) % 7
+#         eow = " " if wd % 7 else "\n"
+#         print(f"{day + 1:2}", end=eow)
+#     print()
 
 
 if __name__ == "__main__":
