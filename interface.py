@@ -5,7 +5,9 @@ from kivy.core.window import Window
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
+from kivy.uix.modalview import ModalView
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
 # noinspection PyUnresolvedReferences
 from kivy.properties import ObjectProperty, NumericProperty, StringProperty
 # noinspection PyUnresolvedReferences
@@ -25,6 +27,30 @@ class FileWidget(Button):
         self.path = fconfiguration['path']
         self.text = self.name
         self.width = length
+
+
+class DayLayout(Button, BoxLayout):
+    date = StringProperty()
+    files = ObjectProperty()
+
+    def __init__(self, date_='', files_=None, **kwargs):
+        super().__init__(**kwargs)
+        if files_ is None:
+            files_ = []
+        self.date = date_
+        self.files = files_
+
+
+class DayLayoutRel(RelativeLayout):
+    date = StringProperty()
+    files = ObjectProperty()
+
+    def __init__(self, date_='', files_=None, **kwargs):
+        super().__init__(**kwargs)
+        if files_ is None:
+            files_ = []
+        self.date = date_
+        self.files = files_
 
 
 m_rgba = (.9, .9, .9, 1)
@@ -116,6 +142,47 @@ class KivyWidgetInterface:
         print(cls.selected_file.text)
 
     @classmethod
+    def select_day(cls, obj: DayLayoutRel):
+        if not cls.selected_file:
+            print('not')
+            print(obj.files)
+            return None  # todo select other screen
+
+        rule = cls.selected_file not in obj.files
+
+        popup = ModalViewAdd()
+        layout = PopupLayout()
+
+        buttons_lay = ButtonLayout()
+        buttons_lay.add_widget(ClosePopupButton(on_release=popup.dismiss))
+        buttons_lay.add_widget(
+            RunPopupButton(on_release=lambda x: cls.update_day(cls.selected_file, obj, popup))) if rule else None
+
+        text = f'Файл\n{cls.selected_file.text}\nуже добавлен на {obj.date}' if not rule else \
+            f'Вы действительно \nхотите добавить файл\n\n{cls.selected_file.text}\nна {obj.date}'
+
+        layout.add_widget(PopupLabel(text=text))
+        layout.add_widget(buttons_lay)
+        popup.add_widget(layout)
+        popup.open()
+
+    @classmethod
+    def update_day(cls, file_, day_: DayLayoutRel, dialog: Popup):
+        dialog.dismiss()
+        cls.deactivate_file()
+        day_.files.append(file_)
+        date_ = day_.date
+        files_ = day_.files
+        # todo save db
+        for child in day_.children:
+            cls.clear_recursive(child)
+        day_.add_widget(DayLayout(date_, files_))
+
+    # popup = PopupAdd(title='hello', content=Label(text='Hello world'),
+    #                          size_hint=(None, None), size=(400, 400))
+    #         popup.open()
+
+    @classmethod
     def deactivate_file(cls):
         if cls.selected_file:
             cls.selected_file.canvas.after.clear()
@@ -127,6 +194,21 @@ class KivyWidgetInterface:
     def previous_month(self):
         print('previous')
 
+    @staticmethod
+    def clear_recursive(obj):
+        child = obj.children
+        if child:
+            for ch in child:
+                KivyWidgetInterface.clear_recursive(ch)
+        else:
+            obj.clear_widgets()
+            obj.remove_widget(obj)
+
+    def update_widget(self, gid):
+        widget = self.get_widget(gid)
+        child = widget.children
+        KivyWidgetInterface.clear_recursive(child)
+
     # def update_pl(self):
     #     sv = self.get_widget('ScrollV')
     #     pl = sv.children[0]
@@ -134,6 +216,14 @@ class KivyWidgetInterface:
     #     pl.remove_widget(pl)
     # sv.clear_widgets()
     # sv.add_widget(ProductLayout())
+
+
+class ClosePopupButton(Button):
+    ...
+
+
+class RunPopupButton(Button):
+    ...
 
 
 class MainScreen(Screen):
@@ -154,7 +244,7 @@ class UserRelativeLayout(RelativeLayout):
     id = ObjectProperty('relative_layout')
 
 
-class CalendarLayout(BoxLayout):
+class CalendarLayout(BoxLayout, KivyWidgetInterface):
     ...
 
 
@@ -162,16 +252,29 @@ class MonthLayout(BoxLayout):
     ...
 
 
-class DayGrid(GridLayout):
+class DayLabel(Label):
     ...
 
 
-class DayLayout(BoxLayout):
+class PopupLabel(Label):
     ...
 
 
-class DayLayoutRel(RelativeLayout):
+class ModalViewAdd(ModalView):
     ...
+
+
+class PopupLayout(BoxLayout):
+    ...
+
+
+class ButtonLayout(BoxLayout):
+    ...
+
+
+class DayGrid(GridLayout, KivyWidgetInterface):
+    def __init__(self, **kwargs):
+        super(DayGrid, self).__init__(**kwargs)
 
 
 class ShadowBox(Widget):
