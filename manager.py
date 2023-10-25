@@ -155,6 +155,8 @@ class DbManager:
                         (file.id_file, date, m_priority + 1))
         return self.get_days_info(mon, d.tm_year, d.tm_mday)
 
+    # def remove_
+
 #
 
 #

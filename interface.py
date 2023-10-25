@@ -121,10 +121,11 @@ class KivyWidgetInterface:
         if widget_object.gid not in self.global_widgets:
             self.global_widgets[widget_object.gid] = widget_object
 
-    def get_widget(self, widget_gid):
+    @classmethod
+    def get_widget(cls, widget_gid):
         """returns widget if it is registered"""
-        if widget_gid in self.global_widgets:
-            return self.global_widgets[widget_gid]
+        if widget_gid in cls.global_widgets:
+            return cls.global_widgets[widget_gid]
         else:
             return None
 
@@ -235,34 +236,46 @@ class KivyWidgetInterface:
             cls.selected_file.canvas.after.clear()
         cls.selected_file = None
 
-    def next_month(self):
-        print('next')
+    @staticmethod
+    def next_month():
+        if int(KivyWidgetInterface.current_month) == 12:
+            KivyWidgetInterface.current_year = str(int(KivyWidgetInterface.current_year) + 1)
+            KivyWidgetInterface.current_month = '01'
+            KivyWidgetInterface.current_month_text = key_array[0]
+        else:
+            KivyWidgetInterface.current_month_text = key_array[int(KivyWidgetInterface.current_month)]
+            KivyWidgetInterface.current_month = f'{int(KivyWidgetInterface.current_month) + 1:0>2}'
+
+        calendar_obj = KivyWidgetInterface.get_widget('CalendarLayout')
+        par = calendar_obj.parent
+        calendar_obj.clear_widgets()
+        calendar_obj.add_widget(MonthLayout())
+        calendar_obj.add_widget(DayGrid())
 
     def previous_month(self):
-        print('previous')
+        if int(KivyWidgetInterface.current_month) == 1:
+            KivyWidgetInterface.current_year = str(int(KivyWidgetInterface.current_year) - 1)
+            KivyWidgetInterface.current_month = '12'
+            KivyWidgetInterface.current_month_text = key_array[11]
+        else:
+            KivyWidgetInterface.current_month = f'{int(KivyWidgetInterface.current_month) - 1:0>2}'
+            KivyWidgetInterface.current_month_text = key_array[int(KivyWidgetInterface.current_month) - 1]
+
+        calendar_obj = KivyWidgetInterface.get_widget('CalendarLayout')
+        par = calendar_obj.parent
+        calendar_obj.clear_widgets()
+        calendar_obj.add_widget(MonthLayout())
+        calendar_obj.add_widget(DayGrid())
 
     @staticmethod
     def clear_recursive(obj):
-        child = obj.children
-        if child:
-            for ch in child:
+        children = obj.children
+        if children:
+            for ch in children:
                 KivyWidgetInterface.clear_recursive(ch)
         else:
             obj.clear_widgets()
             obj.remove_widget(obj)
-
-    def update_widget(self, gid):
-        widget = self.get_widget(gid)
-        child = widget.children
-        KivyWidgetInterface.clear_recursive(child)
-
-    # def update_pl(self):
-    #     sv = self.get_widget('ScrollV')
-    #     pl = sv.children[0]
-    #     pl.clear_widgets()
-    #     pl.remove_widget(pl)
-    # sv.clear_widgets()
-    # sv.add_widget(ProductLayout())
 
 
 class ClosePopupButton(Button):
@@ -329,8 +342,9 @@ class DayGrid(KivyWidgetInterface, GridLayout):
         for i in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
             self.add_widget(DayLabel(text=i))
 
-        month = int(self.current_month)
-        year = int(self.current_year)
+        month = int(KivyWidgetInterface.current_month)
+        year = int(KivyWidgetInterface.current_year)
+        print(month, year)
         wd = date(year, month, 1).weekday()
         days = calendar.mdays[month]
         if calendar.isleap(year) and month == 2:
@@ -342,7 +356,8 @@ class DayGrid(KivyWidgetInterface, GridLayout):
             # days_files = [f['id_file'] for f in self.db.get_files_info()]
             days_files = [f['id_file'] for f in self.db.get_days_info(month, year, day + 1)]
             files_list = self.search_file_dict(days_files)
-            self.add_widget(DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list))
+            self.add_widget(
+                DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list))
 
 
 class ShadowBox(Widget):
@@ -373,7 +388,6 @@ class CalendarApp(KivyWidgetInterface, App):
 
 
 month_length = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
-
 
 # def print_month(month, year):
 #     if month < 1 or month > 12:
