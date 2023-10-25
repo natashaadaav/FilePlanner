@@ -1,11 +1,15 @@
-import re
-from typing import Union
-from datetime import date
 import calendar
+import os
+import re
+import sys
+from datetime import date
+from typing import Union
 
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
+
+from kivy.resources import resource_add_path
 from kivy.app import App
 from kivy.core.window import Window
-from kivy.lang import Builder
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -275,7 +279,6 @@ class MainScreen(Screen, KivyWidgetInterface):
 
 class DayScreen(Screen, KivyWidgetInterface):
     def draw_screen(self, files_list):
-        print('hello', files_list)
         self.clear_widgets()
         layout = BoxLayout(orientation='vertical')
         if not files_list:
@@ -350,7 +353,6 @@ class DayGrid(KivyWidgetInterface, GridLayout):
 
         month = int(KivyWidgetInterface.current_month)
         year = int(KivyWidgetInterface.current_year)
-        print(month, year)
         wd = date(year, month, 1).weekday()
         days = calendar.mdays[month]
         if calendar.isleap(year) and month == 2:
@@ -394,4 +396,6 @@ class CalendarApp(KivyWidgetInterface, App):
 month_length = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
 if __name__ == "__main__":
+    if hasattr(sys, '_MEIPASS'):
+        resource_add_path(os.path.join(sys._MEIPASS))
     CalendarApp().run()
