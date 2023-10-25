@@ -1,38 +1,27 @@
 #: import Window kivy.core.window.Window
 
 <Manager>:
+    gid: 'Manager'
+    register_method: app.register_widget(self)
     id: screen_manager
     main_screen: main_screen
     MainScreen:
+        gid: 'MainScreen'
+        register_method: app.register_widget(self)
         id: main_screen
         name: 'MainScreen'
         manager: screen_manager
 
-        BoxLayout:
-            orientation: 'vertical'
-            canvas.before:
-                Color:
-                    rgba: (1, 1, 1, 1)
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
-            UserRelativeLayout:
-                size_hint_y: None
-                height: app.file_panel_height
-                id: file_panel
-                ScrollV:
-                    id: scroll_area
-                    size_hint_x: 1 #1 - app.main_size_small * 2
-                    do_scroll_y: False
-                    do_scroll_x: True
-                    scroll_type: ['bars', 'content']
-                    on_scroll_stop: app.on_scroll_up(self)
-                    FileLayout
-            CalendarLayout
+        MainBox
+
+
     DayScreen:
+        gid: 'DayScreen'
+        register_method: app.register_widget(self)
         id: day_screen
         name: 'DayScreen'
         manager: screen_manager
+
 
 <FileLayout>:
     size_hint: None, None
@@ -284,3 +273,24 @@
     halign: 'center'
     valign: 'middle'
 
+<MainBox>:
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    UserRelativeLayout:
+        size_hint_y: None
+        height: app.file_panel_height
+        id: file_panel
+        ScrollV:
+            id: scroll_area
+            size_hint_x: 1 #1 - app.main_size_small * 2
+            do_scroll_y: False
+            do_scroll_x: True
+            scroll_type: ['bars', 'content']
+            on_scroll_stop: app.on_scroll_up(self)
+            FileLayout
+    CalendarLayout
