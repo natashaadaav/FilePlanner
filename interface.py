@@ -8,6 +8,7 @@ from typing import Union
 
 # os.environ["KIVY_NO_CONSOLELOG"] = "1"
 
+from kivy.config import Config
 from kivy.resources import resource_add_path
 from kivy.app import App
 from kivy.core.window import Window
@@ -35,8 +36,6 @@ class FileWidget(BoxLayout, Button):
         self.id_file = fconfiguration['id_file']
         self.name = fconfiguration['name']
         self.path = fconfiguration['path']
-
-        # self.width = length
 
     def change_flayout(self):
         fl = KivyWidgetInterface.get_widget('FileLayout')
@@ -85,8 +84,6 @@ class KivyWidgetInterface:
     ''' interface for  global widget access '''
 
     db = db_manager
-    # print(datetime.date.today().month)
-    #     print(datetime.date.today().year)
     current_month = f'{datetime.date.today().month:0>2}'
     current_year = str(datetime.date.today().year)
     current_month_text = key_array[datetime.date.today().month - 1]
@@ -257,17 +254,6 @@ class KivyWidgetInterface:
         calendar_obj.add_widget(MonthLayout())
         calendar_obj.add_widget(DayGrid())
 
-    # @staticmethod
-    # def clear_recursive(obj):
-    #     children = obj.children
-    #     if children:
-    #         for ch in children:
-    #             KivyWidgetInterface.clear_recursive(ch)
-    #     else:
-    #         obj.clear_widgets()
-    #         obj.remove_widget(obj)
-
-
 class ClosePopupButton(Button):
     ...
 
@@ -418,13 +404,13 @@ class DayGrid(KivyWidgetInterface, GridLayout):
         for day in range(days):
             wd = (wd + 1) % 7
             days_files = [f['id_file'] for f in self.db.get_days_info(month, year, day + 1)]
-            files_list = self.search_file_dict(days_files)
+            files_list = self.db.get_days_info(month, year, day + 1)
+            if files_list: print(files_list)
             self.add_widget(
                 DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list))
 
 
-class ShadowBox(Widget):
-    ...
+class ShadowBox(Widget):   ...
 
 
 class FileLayout(BoxLayout, KivyWidgetInterface):
@@ -443,10 +429,6 @@ class Manager(ScreenManager, KivyWidgetInterface):
 class CalendarApp(KivyWidgetInterface, App):
 
     def build(self):
-        # todo Ограничить размер окна в неразвернутом виде
-        # todo Скачать шрифты, установить их везде
-        # todo Скачать иконку, установить
-        Window.size = 700, 495
         sm = Manager()
         return sm
 
@@ -454,6 +436,11 @@ class CalendarApp(KivyWidgetInterface, App):
 month_length = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
 if __name__ == "__main__":
+
+    Config.set('graphics', 'width', '700')
+    Config.set('graphics', 'height', '495')
+    Config.set('graphics', 'resizable', '0')
+    Config.write()
     if hasattr(sys, '_MEIPASS'):
         resource_add_path(os.path.join(sys._MEIPASS))
     CalendarApp().run()

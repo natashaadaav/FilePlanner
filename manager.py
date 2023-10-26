@@ -129,17 +129,17 @@ class DbManager:
                 day = f'{day:0>2}'
                 if priority:
                     cur.execute("select max(priority) as m_priority from file_date "
-                                "where strftime('%Y-%m-%d', fix_date) = :date",
+                                "where strftime('%Y-%m-%d', fix_date) = :date order by priority",
                                 {'date': f'{year}-{month}-{day}'})
                     return cur.fetchone()
                 cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
                             "from file_date left join files using (id_file) "
-                            "where strftime('%Y-%m-%d', fix_date) = :date order by fix_date",
+                            "where strftime('%Y-%m-%d', fix_date) = :date order by priority",
                             {'date': f'{year}-{month}-{day}'})
                 return cur.fetchall()
             cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
                         "from file_date left join files using (id_file) "
-                        "where strftime('%m.%Y', fix_date) = :date order by fix_date", {'date': month + '.' + year})
+                        "where strftime('%m.%Y', fix_date) = :date order by priority", {'date': month + '.' + year})
             return cur.fetchall()
 
         # self.sys_files
