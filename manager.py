@@ -155,8 +155,10 @@ class DbManager:
                         (file.id_file, date, m_priority + 1))
         return self.get_days_info(mon, d.tm_year, d.tm_mday)
 
-    # def remove_
-
-#
-
-#
+    def remove_day_file(self, date, id_file):
+        with self.con:
+            cur = self.con.cursor()
+            cur.execute("delete from file_date "
+                        "where strftime('%Y-%m-%d', fix_date) = :date and id_file = :id_file",
+                        {'date': date, 'id_file': id_file})
+            print(cur.fetchall())

@@ -178,9 +178,9 @@
 <ClosePopupButton>:
     text: 'Назад'
     color: app.accent_rgba
-    font_size: self.height/3
+    #font_size: self.height/3
     size_hint_y: None
-    height: app.file_panel_height
+    height: app.file_widget_height
     background_normal: ''
     background_down: ''
     background_color: (0, 0, 0, 0)
@@ -195,9 +195,9 @@
 <RunPopupButton>:
     text: 'Сохранить'
     color: app.accent_rgba
-    font_size: self.height/3
+    #font_size: self.height/3
     size_hint_y: None
-    height: app.file_panel_height
+    height: app.file_widget_height
     background_normal: ''
     background_down: ''
     background_color: (0, 0, 0, 0)
@@ -273,3 +273,59 @@
             on_scroll_stop: app.on_scroll_up(self)
             FileLayout
     CalendarLayout
+
+# todo style DayScreen
+<DeleteButton>:
+    background_normal: ''
+    background_down: ''
+    background_color: (0, 0, 0, 0)
+    color: app.accent_rgba
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(0, 0), (5, 5), (5, 5), (0, 0)]
+
+
+<DeleteLabel>:
+    color: (0, 0, 0, 1)
+    size_hint: (1, 1)
+
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [(5, 5), (0, 0), (0, 0), (5, 5)]
+
+<DeleteScroll>:
+    id: scroll_area
+    size_hint_y: 1
+    do_scroll_x: False
+    do_scroll_y: True
+    scroll_type: ['bars', 'content']
+
+<DeleteLayout>:
+    orientation: 'vertical'
+    size_hint_y: None
+    padding: app.file_panel_padding
+
+    spacing: app.file_panel_padding
+    height:
+        max(sum(x.height + self.padding[1] for x in self.children) + self.spacing, \
+        Window.height - (app.file_panel_height + app.file_widget_height))
+
+<DeleteButtonRel>:
+    ShadowBox
+
+<MainDeleteBox>:
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: app.main_rgba
+        Rectangle:
+            pos: self.pos
+            size: self.size

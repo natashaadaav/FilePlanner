@@ -1,4 +1,5 @@
 import calendar
+import datetime
 import os
 import re
 import sys
@@ -84,9 +85,11 @@ class KivyWidgetInterface:
     ''' interface for  global widget access '''
 
     db = db_manager
-    current_month = '10'  # todo инициализация now()
-    current_year = '2023'  # todo инициализация now()
-    current_month_text = key_array[10 - 1]
+    # print(datetime.date.today().month)
+    #     print(datetime.date.today().year)
+    current_month = f'{datetime.date.today().month:0>2}'
+    current_year = str(datetime.date.today().year)
+    current_month_text = key_array[datetime.date.today().month - 1]
     files = db_files
     kf = 8.3
     standard_background_color = ObjectProperty()
@@ -178,12 +181,11 @@ class KivyWidgetInterface:
         if not cls.selected_file:
             manager = cls.get_widget('Manager')
             new_screen = manager.get_screen('DayScreen')
-            new_screen.draw_screen(obj.files)
+            new_screen.draw_screen(obj.files, obj.date)
             manager.transition = SlideTransition()
             manager.transition.direction = 'right'
             manager.current = 'DayScreen'
-
-            return None  # todo select other screen
+            return None
         ids = [x['id_file'] for x in obj.files]
         rule = cls.selected_file.id_file not in ids
 
@@ -240,7 +242,8 @@ class KivyWidgetInterface:
         calendar_obj.add_widget(MonthLayout())
         calendar_obj.add_widget(DayGrid())
 
-    def previous_month(self):
+    @staticmethod
+    def previous_month():
         if int(KivyWidgetInterface.current_month) == 1:
             KivyWidgetInterface.current_year = str(int(KivyWidgetInterface.current_year) - 1)
             KivyWidgetInterface.current_month = '12'
@@ -250,7 +253,6 @@ class KivyWidgetInterface:
             KivyWidgetInterface.current_month_text = key_array[int(KivyWidgetInterface.current_month) - 1]
 
         calendar_obj = KivyWidgetInterface.get_widget('CalendarLayout')
-        par = calendar_obj.parent
         calendar_obj.clear_widgets()
         calendar_obj.add_widget(MonthLayout())
         calendar_obj.add_widget(DayGrid())
@@ -279,29 +281,83 @@ class MainScreen(Screen, KivyWidgetInterface):
 
 
 class DayScreen(Screen, KivyWidgetInterface):
-    def draw_screen(self, files_list):
+    def draw_screen(self, files_list, file_date):
         self.clear_widgets()
-        layout = BoxLayout(orientation='vertical')
+        layout = MainDeleteBox()
+        ll = DeleteButtonCancelRel(size_hint_y=None, height=self.file_widget_height)
+        ll.add_widget(DeleteButton(text=file_date, y=1))
+        layout.add_widget(ll)
+        scroll_area = DeleteScroll()
+
+        layout_delete = DeleteLayout(orientation='vertical')
         if not files_list:
-            layout.add_widget(Label(text='nothing'))
+            layout_delete.add_widget(Label(text='Файлы не добавлены', color=(0, 0, 0, 1)))
         for file in files_list:
-            layout_button = BoxLayout(orientation='horizontal')
-            layout_button.add_widget(Label(text=file['name']))
-            layout_button.add_widget(Button(text=f'delete {file["id_file"]}',
-                                            on_release=lambda x: self.remove_file(file['id_file'])))
-            layout.add_widget(layout_button)
-        layout.add_widget(Button(text='cancel',
-                                 on_release=self.to_main))
+            layout_button = DeleteButtonRel(size_hint_y=None, height=self.file_widget_height)
+            btn = BoxLayout(orientation='horizontal', size_hint_y=None, height=self.file_widget_height)
+            btn.add_widget(DeleteLabel(text=file['name']))
+            btn_ = DeleteButton(text=f'Удалить', size_hint_x=None, width=80)
+            btn_.id_file = file['id_file']
+            btn_.date = file_date
+            btn_.on_release = btn_.remove_file
+            btn.add_widget(btn_)
+            layout_button.add_widget(btn)
+            layout_delete.add_widget(layout_button)
+        layout.add_widget(scroll_area)
+        scroll_area.add_widget(layout_delete)
+        btn_cancel = DeleteButtonCancelRel(size_hint_y=None, height=self.file_widget_height)
+        btn_cancel.add_widget(DeleteButton(text='Назад', size_hint_y=None, height=self.file_widget_height,
+                                           on_release=self.to_main))
+        layout.add_widget(btn_cancel)
         self.add_widget(layout)
 
-    def remove_file(self, file):
-        pass
-
-    def to_main(self, smth):
+    @staticmethod
+    def to_main(*args, **kwargs):
         manager = KivyWidgetInterface.get_widget('Manager')
         manager.transition = SlideTransition()
         manager.transition.direction = 'left'
         manager.current = 'MainScreen'
+
+
+class MainDeleteBox(BoxLayout):
+    ...
+
+
+class DeleteScroll(ScrollView):
+    ...
+
+
+class DeleteLayout(BoxLayout):
+    ...
+
+
+class DeleteButton(Button):
+    id_file = NumericProperty()
+    date = StringProperty()
+
+    def remove_file(self):
+        KivyWidgetInterface.db.remove_day_file(self.date, self.id_file)
+        calendar_obj = KivyWidgetInterface.get_widget('CalendarLayout')
+        calendar_obj.clear_widgets()
+        calendar_obj.add_widget(MonthLayout())
+        calendar_obj.add_widget(DayGrid())
+        self.parent.parent.parent.remove_widget(self.parent.parent)
+
+
+class DeleteButtonCancel(DeleteButton):
+    ...
+
+
+class DeleteButtonRel(RelativeLayout):
+    ...
+
+
+class DeleteButtonCancelRel(DeleteButtonRel):
+    ...
+
+
+class DeleteLabel(Label):
+    ...
 
 
 class ScrollV(KivyWidgetInterface, ScrollView):
@@ -313,8 +369,7 @@ class UserRelativeLayout(RelativeLayout):
 
 
 class CalendarLayout(KivyWidgetInterface, BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    ...
 
 
 class MainBox(BoxLayout):
@@ -388,9 +443,10 @@ class Manager(ScreenManager, KivyWidgetInterface):
 class CalendarApp(KivyWidgetInterface, App):
 
     def build(self):
-        # self.icon = icon
+        # todo Ограничить размер окна в неразвернутом виде
+        # todo Скачать шрифты, установить их везде
+        # todo Скачать иконку, установить
         Window.size = 700, 495
-        # Window.size = 1000, 800
         sm = Manager()
         return sm
 
