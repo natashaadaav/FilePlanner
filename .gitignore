@@ -1,8 +1,4 @@
-freefridge.kv
 .idea
 .ssh
 venv
 __pycache__
-build
-dist
-interface.spec
