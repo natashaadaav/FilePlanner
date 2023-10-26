@@ -24,29 +24,28 @@
 
 
 <FileLayout>:
+    gid: 'FileLayout'
+    register_method: app.register_widget(self)
     size_hint: None, None
     padding: app.file_panel_padding
     spacing: app.file_panel_padding
     height: app.file_panel_height
+    width: sum(x.width + self.padding[0] for x in self.children) + self.spacing
 
-    width: max(Window.width, app.get_sum_fwidth() + app.file_panel_padding * (len(app.files) + 1)) #self.width_f = max(Window.width, self.get_sum_fwidth())
-    canvas.before:
-        Color:
-            rgba: (1, 1, 1, 1)
-        Rectangle:
-            pos: self.pos
-            size: self.size
 
 
 <FileWidget>:
-    size_hint_y: None
-    size_hint_x: None
-    height: app.file_widget_height
     background_normal: ''
     background_down: ''
     background_color: (0, 0, 0, 0)
     color: (0, 0, 0)
     on_release: app.select_file(self)
+    width: 150
+    text_size: self.width, self.height
+    valign: 'middle'
+    halign: 'center'
+    padding: 5
+
     canvas.before:
         Color:
             rgba: app.main_rgba
@@ -76,11 +75,7 @@
     padding: app.file_panel_padding * 2
     spacing: app.file_panel_padding
     height: app.file_panel_height * 1.5
-    Widget:
-        #size_hint_x: None
-        #size_hint_y: None
-        #width: app.file_panel_height
-        #height: app.file_panel_height
+    Widget
     Button:
         background_normal: ''
         background_down: ''
@@ -123,8 +118,6 @@
         text: app.current_year
         font_size: Window.height/25
         color: app.accent_rgba
-        #size_hint_x: None
-        #width: app.file_panel_height
 
 <DayGrid>:
     gid: 'DayGrid'
@@ -136,9 +129,6 @@
 
 <DayLayoutRel>:
     ShadowBox
-    #DayLayout:
-    #    date: self.parent.day
-    #    files: self.parent.files
 
 <DayLabel>:
     color: app.accent_rgba
@@ -182,9 +172,6 @@
         BoxShadow:
             pos: self.pos[0] + 10, self.pos[1] + 10
             size: self.size[0] - 20, self.size[1] - 20
-            #offset: 0, -10
-            #spread_radius: -50, -55
-            #border_radius: 5,5,5,5
             blur_radius: 15
 
 
@@ -237,14 +224,6 @@
             size: self.size[0] - 20, self.size[1] - 20
             blur_radius: 20
 
-    #canvas:
-    #    Color:
-    #        rgba: (1, 1, 1, 1)
-    #    RoundedRectangle:
-    #        pos: self.pos
-    #        size: self.size
-    #        radius: [(5, 5), (5, 5), (5, 5), (5, 5)]
-
 
 
 <PopupLayout>
@@ -287,7 +266,7 @@
         id: file_panel
         ScrollV:
             id: scroll_area
-            size_hint_x: 1 #1 - app.main_size_small * 2
+            size_hint_x: 1
             do_scroll_y: False
             do_scroll_x: True
             scroll_type: ['bars', 'content']

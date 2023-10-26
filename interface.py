@@ -5,7 +5,7 @@ import sys
 from datetime import date
 from typing import Union
 
-os.environ["KIVY_NO_CONSOLELOG"] = "1"
+# os.environ["KIVY_NO_CONSOLELOG"] = "1"
 
 from kivy.resources import resource_add_path
 from kivy.app import App
@@ -27,14 +27,18 @@ from kivy.uix.relativelayout import RelativeLayout
 from manager import DbManager
 
 
-class FileWidget(Button):
-    def __init__(self, fconfiguration: dict, length: float, **kwargs):
-        super(FileWidget, self).__init__(**kwargs)
+class FileWidget(BoxLayout, Button):
+
+    def __init__(self, fconfiguration: dict, **kwargs):
+        super().__init__(**kwargs)
         self.id_file = fconfiguration['id_file']
         self.name = fconfiguration['name']
         self.path = fconfiguration['path']
-        self.text = self.name
-        self.width = length
+
+        # self.width = length
+
+    def change_flayout(self):
+        fl = KivyWidgetInterface.get_widget('FileLayout')
 
 
 class DayLayout(Button, BoxLayout):
@@ -88,9 +92,9 @@ class KivyWidgetInterface:
     standard_background_color = ObjectProperty()
     global_widgets = {}
     name_app = StringProperty("Calendar")
-    file_widget_height = NumericProperty(30)
+    file_widget_height = NumericProperty(35)
     file_panel_padding = NumericProperty(10)
-    file_panel_height = NumericProperty(30 + 2 * 10)
+    file_panel_height = NumericProperty(35 + 2 * 10)
     main_rgba = ObjectProperty(m_rgba)
     accent_rgba = ObjectProperty(a_rgba)
 
@@ -172,10 +176,7 @@ class KivyWidgetInterface:
     @classmethod
     def select_day(cls, obj: DayLayoutRel):
         if not cls.selected_file:
-            # print('not')
-            # print(obj.files)
             manager = cls.get_widget('Manager')
-            # current = manager.get_screen(manager.current)
             new_screen = manager.get_screen('DayScreen')
             new_screen.draw_screen(obj.files)
             manager.transition = SlideTransition()
@@ -183,8 +184,8 @@ class KivyWidgetInterface:
             manager.current = 'DayScreen'
 
             return None  # todo select other screen
-
-        rule = cls.selected_file not in obj.files
+        ids = [x['id_file'] for x in obj.files]
+        rule = cls.selected_file.id_file not in ids
 
         popup = ModalViewAdd()
         layout = PopupLayout()
@@ -194,8 +195,8 @@ class KivyWidgetInterface:
         buttons_lay.add_widget(
             RunPopupButton(on_release=lambda x: cls.update_day(cls.selected_file, obj, popup))) if rule else None
 
-        text = f'Файл\n{cls.selected_file.text}\nуже добавлен на {obj.date}' if not rule else \
-            f'Вы действительно \nхотите добавить файл\n\n{cls.selected_file.text}\nна {obj.date}'
+        text = f'Файл\n{cls.selected_file.name}\nуже добавлен на {obj.date}' if not rule else \
+            f'Вы действительно \nхотите добавить файл\n\n{cls.selected_file.name}\nна {obj.date}'
 
         layout.add_widget(PopupLabel(text=text))
         layout.add_widget(buttons_lay)
@@ -375,7 +376,8 @@ class FileLayout(BoxLayout, KivyWidgetInterface):
     def __init__(self, **kwargs):
         super(FileLayout, self).__init__(**kwargs)
         for f in self.files:
-            fw = FileWidget(f, length=self.get_fwidth(f['name']))
+            name = f['name'] if len(f['name']) <= 29 else f['name'][:27] + '...'
+            fw = FileWidget(f, text=name)
             self.add_widget(fw)
 
 
