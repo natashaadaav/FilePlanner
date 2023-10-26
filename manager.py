@@ -5,6 +5,9 @@ from typing import List, Tuple, Literal, Union
 
 
 def dict_factory(cursor, row):
+    """
+    Фабрика для того, чтобы получать из БД строки в формате dict
+    """
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
@@ -12,6 +15,9 @@ def dict_factory(cursor, row):
 
 
 class DbManager:
+    """
+    Класс для взаимодействия с БД
+    """
     NAME_APP = 'FilePlanner'
     DB_NAME = 'storage.db'
 
@@ -25,14 +31,27 @@ class DbManager:
 
     @classmethod
     def get_app_path(cls, home):
+        """
+        :param home: Путь к каталогу пользователя (~)
+        :return: Путь к папке с файлами, необходимыми для работы приложения
+
+        Метод для получения/создания пути хранения файлов для работы прирложения (БД)
+        """
         app_path = os.path.join(home, cls.NAME_APP)
         if not os.path.exists(app_path):
             os.mkdir(app_path)
         return app_path
 
     @staticmethod
-    def get_desktop():
-        desktop, home = None, None
+    def get_desktop() -> Tuple[str, str]:
+        """
+        :return: (desktop, home)
+
+        Метод для получения пути к рабочему столу - desktop,
+        пути к каталогу пользователя (~) - home
+        Если приложение не поддерживается, программа завершится с ошибкой "Unknown system"
+        (просто закроется при сборке без консоли)
+        """
         if os.name == 'nt':
             home = os.path.join(os.environ['USERPROFILE'])
             desktop = os.path.join(home, 'Desktop')
@@ -49,6 +68,13 @@ class DbManager:
 
     @staticmethod
     def get_files_from_desktop(desktop, pass_lnk=True) -> List:
+        """
+        :param desktop: Путь к рабочему столу
+        :param pass_lnk: Флаг для пропуска ярлыков на рабочем столе (по умолчанию True)
+        :return: Список файлов
+
+        Метод для получения списка файлов с рабочего стола
+        """
         files = []
         for fname in os.listdir(desktop):
             fpath = os.path.join(desktop, fname)

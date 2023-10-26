@@ -98,7 +98,7 @@ class KivyWidgetInterface:
     kf = 8.3
     standard_background_color = ObjectProperty()
     global_widgets = {}
-    name_app = StringProperty("Calendar")
+    name_app = StringProperty(db_manager.NAME_APP)
     file_widget_height = NumericProperty(35)
     file_panel_padding = NumericProperty(10)
     file_panel_height = NumericProperty(35 + 2 * 10)
@@ -439,6 +439,7 @@ class Manager(ScreenManager, KivyWidgetInterface):
 class CalendarApp(KivyWidgetInterface, App):
 
     def build(self):
+        self.title = self.name_app
         sm = Manager()
         return sm
 
