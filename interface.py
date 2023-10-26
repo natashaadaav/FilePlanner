@@ -3,10 +3,11 @@ import datetime
 import os
 import re
 import sys
+
 from datetime import date
 from typing import Union
 
-# os.environ["KIVY_NO_CONSOLELOG"] = "1"
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
 
 from kivy.config import Config
 from kivy.resources import resource_add_path
@@ -44,35 +45,41 @@ class FileWidget(BoxLayout, Button):
 class DayLayout(Button, BoxLayout):
     day = StringProperty()
     files = ObjectProperty()
+    wd = NumericProperty()
 
-    def __init__(self, day_='', files_=None, **kwargs):
+    def __init__(self, day_='', files_=None, wd=0, **kwargs):
         super().__init__(**kwargs)
         if files_ is None:
             files_ = []
         self.day = day_
         self.files = files_
+        self.wd = wd
 
 
 class DayLayoutRel(RelativeLayout):
     date = StringProperty()
     day = StringProperty()
     files = ObjectProperty()
+    wd = NumericProperty()
 
-    def __init__(self, day_='', date_='', files_=None, **kwargs):
+    def __init__(self, day_='', date_='', files_=None, wd=0, **kwargs):
         super().__init__(**kwargs)
         if files_ is None:
             files_ = []
         self.date = date_
         self.day = day_
         self.files = files_
-        self.add_widget(DayLayout(day_=self.day, files_=self.files))
+        self.wd = wd
+        self.add_widget(DayLayout(day_=self.day, files_=self.files, wd=wd))
 
 
 m_rgba = (.9, .9, .9, 1)
-a_rgba = (.1, .1, .8, .4)
+a_rgba = (.09, .15, .69, .8)
+h_rgba = (1, .95, .95, 1)
 db_manager = DbManager()
 db_files = db_manager.get_files_info()
 
+holidays = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (23, 2), (8, 3), (1, 5), (9, 5), (12, 6), (4, 11)]
 key_array = ('Январь', 'Февраль',
              'Март', 'Апрель', 'Май',
              'Июнь', 'Июль', 'Август',
@@ -97,6 +104,7 @@ class KivyWidgetInterface:
     file_panel_height = NumericProperty(35 + 2 * 10)
     main_rgba = ObjectProperty(m_rgba)
     accent_rgba = ObjectProperty(a_rgba)
+    hot_rgba = ObjectProperty(h_rgba)
 
     selected_file = None
 
@@ -194,8 +202,8 @@ class KivyWidgetInterface:
         buttons_lay.add_widget(
             RunPopupButton(on_release=lambda x: cls.update_day(cls.selected_file, obj, popup))) if rule else None
 
-        text = f'Файл\n{cls.selected_file.name}\nуже добавлен на {obj.date}' if not rule else \
-            f'Вы действительно \nхотите добавить файл\n\n{cls.selected_file.name}\nна {obj.date}'
+        text = f'\nФайл\n\n{cls.selected_file.name}\n\nуже добавлен на {obj.date}' if not rule else \
+            f'\nВы действительно \nхотите добавить файл\n\n{cls.selected_file.name}\n\nна {obj.date}'
 
         layout.add_widget(PopupLabel(text=text))
         layout.add_widget(buttons_lay)
@@ -213,9 +221,10 @@ class KivyWidgetInterface:
         })
         date_ = day_.day
         files_ = day_.files
+        wd = day_.wd
         new_files = cls.db.add_new_days_file(day_.date, file_)
         day_.clear_widgets()
-        day_.add_widget(DayLayout(date_, files_))
+        day_.add_widget(DayLayout(date_, files_, wd))
 
     @classmethod
     def deactivate_file(cls):
@@ -253,6 +262,7 @@ class KivyWidgetInterface:
         calendar_obj.clear_widgets()
         calendar_obj.add_widget(MonthLayout())
         calendar_obj.add_widget(DayGrid())
+
 
 class ClosePopupButton(Button):
     ...
@@ -389,9 +399,8 @@ class ButtonLayout(BoxLayout):
 class DayGrid(KivyWidgetInterface, GridLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
         for i in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']:
-            self.add_widget(DayLabel(text=i))
+            self.add_widget(DayLabel(text=i, bold=True))
 
         month = int(KivyWidgetInterface.current_month)
         year = int(KivyWidgetInterface.current_year)
@@ -402,12 +411,13 @@ class DayGrid(KivyWidgetInterface, GridLayout):
         for day in range(wd):
             self.add_widget(Label(text=''))
         for day in range(days):
+            wds = 6 if (day + 1, month) in holidays else wd
             wd = (wd + 1) % 7
-            days_files = [f['id_file'] for f in self.db.get_days_info(month, year, day + 1)]
+            # days_files = [f['id_file'] for f in self.db.get_days_info(month, year, day + 1)]
             files_list = self.db.get_days_info(month, year, day + 1)
-            if files_list: print(files_list)
-            self.add_widget(
-                DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list))
+            dlr = DayLayoutRel(day_=str(day + 1), date_=f'{year}-{month:0>2}-{(day + 1):0>2}', files_=files_list,
+                               wd=wds)
+            self.add_widget(dlr)
 
 
 class ShadowBox(Widget):   ...

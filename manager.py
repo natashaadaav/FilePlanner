@@ -142,8 +142,6 @@ class DbManager:
                         "where strftime('%m.%Y', fix_date) = :date order by priority", {'date': month + '.' + year})
             return cur.fetchall()
 
-        # self.sys_files
-
     def add_new_days_file(self, date, file: dict):
         d = datetime.datetime.strptime(date, '%Y-%m-%d').timetuple()
         mon = d.tm_mon
@@ -161,4 +159,3 @@ class DbManager:
             cur.execute("delete from file_date "
                         "where strftime('%Y-%m-%d', fix_date) = :date and id_file = :id_file",
                         {'date': date, 'id_file': id_file})
-            print(cur.fetchall())
