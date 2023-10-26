@@ -5,6 +5,9 @@ from typing import List, Tuple, Literal, Union
 
 
 def dict_factory(cursor, row):
+    """
+    Фабрика для того, чтобы получать из БД строки в формате dict
+    """
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
@@ -12,6 +15,9 @@ def dict_factory(cursor, row):
 
 
 class DbManager:
+    """
+    Класс для взаимодействия с БД
+    """
     NAME_APP = 'FilePlanner'
     DB_NAME = 'storage.db'
 
@@ -25,14 +31,27 @@ class DbManager:
 
     @classmethod
     def get_app_path(cls, home):
+        """
+        :param home: Путь к каталогу пользователя (~)
+        :return: Путь к папке с файлами, необходимыми для работы приложения
+
+        Метод для получения/создания пути хранения файлов для работы прирложения (БД)
+        """
         app_path = os.path.join(home, cls.NAME_APP)
         if not os.path.exists(app_path):
             os.mkdir(app_path)
         return app_path
 
     @staticmethod
-    def get_desktop():
-        desktop, home = None, None
+    def get_desktop() -> Tuple[str, str]:
+        """
+        :return: (desktop, home)
+
+        Метод для получения пути к рабочему столу - desktop,
+        пути к каталогу пользователя (~) - home
+        Если приложение не поддерживается, программа завершится с ошибкой "Unknown system"
+        (просто закроется при сборке без консоли)
+        """
         if os.name == 'nt':
             home = os.path.join(os.environ['USERPROFILE'])
             desktop = os.path.join(home, 'Desktop')
@@ -49,6 +68,13 @@ class DbManager:
 
     @staticmethod
     def get_files_from_desktop(desktop, pass_lnk=True) -> List:
+        """
+        :param desktop: Путь к рабочему столу
+        :param pass_lnk: Флаг для пропуска ярлыков на рабочем столе (по умолчанию True)
+        :return: Список файлов
+
+        Метод для получения списка файлов с рабочего стола
+        """
         files = []
         for fname in os.listdir(desktop):
             fpath = os.path.join(desktop, fname)
@@ -129,20 +155,18 @@ class DbManager:
                 day = f'{day:0>2}'
                 if priority:
                     cur.execute("select max(priority) as m_priority from file_date "
-                                "where strftime('%Y-%m-%d', fix_date) = :date",
+                                "where strftime('%Y-%m-%d', fix_date) = :date order by priority",
                                 {'date': f'{year}-{month}-{day}'})
                     return cur.fetchone()
                 cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
                             "from file_date left join files using (id_file) "
-                            "where strftime('%Y-%m-%d', fix_date) = :date order by fix_date",
+                            "where strftime('%Y-%m-%d', fix_date) = :date order by priority",
                             {'date': f'{year}-{month}-{day}'})
                 return cur.fetchall()
             cur.execute("select id_file, name, path, id as id_fix, fix_date, priority "
                         "from file_date left join files using (id_file) "
-                        "where strftime('%m.%Y', fix_date) = :date order by fix_date", {'date': month + '.' + year})
+                        "where strftime('%m.%Y', fix_date) = :date order by priority", {'date': month + '.' + year})
             return cur.fetchall()
-
-        # self.sys_files
 
     def add_new_days_file(self, date, file: dict):
         d = datetime.datetime.strptime(date, '%Y-%m-%d').timetuple()
@@ -155,8 +179,9 @@ class DbManager:
                         (file.id_file, date, m_priority + 1))
         return self.get_days_info(mon, d.tm_year, d.tm_mday)
 
-    # def remove_
-
-#
-
-#
+    def remove_day_file(self, date, id_file):
+        with self.con:
+            cur = self.con.cursor()
+            cur.execute("delete from file_date "
+                        "where strftime('%Y-%m-%d', fix_date) = :date and id_file = :id_file",
+                        {'date': date, 'id_file': id_file})
