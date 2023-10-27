@@ -7,6 +7,12 @@ from typing import List, Tuple, Literal, Union
 def dict_factory(cursor, row):
     """
     Фабрика для того, чтобы получать из БД строки в формате dict
+    Например:
+        {
+            'column_name1': 'value1',
+            'column_name2': 'value2',
+            ...
+        }
     """
     d = {}
     for idx, col in enumerate(cursor.description):
@@ -17,6 +23,7 @@ def dict_factory(cursor, row):
 class DbManager:
     """
     Класс для взаимодействия с БД
+    (не предназначен для наследования).
     """
     NAME_APP = 'FilePlanner'
     DB_NAME = 'storage.db'
@@ -35,7 +42,7 @@ class DbManager:
         :param home: Путь к каталогу пользователя (~)
         :return: Путь к папке с файлами, необходимыми для работы приложения
 
-        Метод для получения/создания пути хранения файлов для работы прирложения (БД)
+        Метод для получения/создания пути хранения файлов для работы прирложения (БД).
         """
         app_path = os.path.join(home, cls.NAME_APP)
         if not os.path.exists(app_path):
@@ -48,9 +55,9 @@ class DbManager:
         :return: (desktop, home)
 
         Метод для получения пути к рабочему столу - desktop,
-        пути к каталогу пользователя (~) - home
+        пути к каталогу пользователя (~) - home.
         Если приложение не поддерживается, программа завершится с ошибкой "Unknown system"
-        (просто закроется при сборке без консоли)
+        (просто закроется при сборке без консоли).
         """
         if os.name == 'nt':
             home = os.path.join(os.environ['USERPROFILE'])
@@ -73,7 +80,7 @@ class DbManager:
         :param pass_lnk: Флаг для пропуска ярлыков на рабочем столе (по умолчанию True)
         :return: Список файлов
 
-        Метод для получения списка файлов с рабочего стола
+        Метод для получения списка файлов с рабочего стола.
         """
         files = []
         for fname in os.listdir(desktop):
@@ -85,6 +92,14 @@ class DbManager:
         return files
 
     def __get_db(self, app_path, factory: Literal['dict', 'tuple'] = 'tuple'):
+        """
+        :param app_path: Путь к рабочему каталогу приложения (БД)
+        :param factory: Выбор фабрики ('dict' или 'tuple')
+        :return: Список файлов
+
+        Метод для инициализации подключения к БД (создается новый файл, если не существует).
+        Используется в инициализаторе класса.
+        """
         db_path = os.path.join(app_path, self.DB_NAME)
         if not os.path.exists(db_path):
             con = connect(db_path)
@@ -107,12 +122,31 @@ class DbManager:
         return con, db_path
 
     def __get_files_from_db(self) -> List:
+        """
+        :return: Список файлов из БД в зависимости от фабрики ('tuple' или 'dict'), задаваемой через метод
+            __get_db(*args)
+
+        Метод для получения списка файлов из БД,
+        требует предварительного запуска метода __get_db(*args) - для инициализации подключения.
+        Используется в инициализаторе класса.
+        """
         with self.con:
             cur = self.con.cursor()
             cur.execute("select id_file, name, path from files")
             return cur.fetchall()
 
     def __file_comparator(self) -> Tuple[List, List]:
+        """
+        :return: Кортеж из двух списков:
+            1. Список новых файлов на рабочем столе в формате List[Tuple('name', '\path\to\file'), ...];
+            2. Список файлов, подлежащих удалению из БД в формате List['id_file', 'id_file', ...];
+
+        Метод для получения двух списков: новых файлов на рабочем столе и подлежащих удалению из БД файлов,
+        требует предварительного запуска метода __get_db(*args) с параметром factory='dict' для инициализации
+        подключения self.con, get_files_from_desktop(self.desktop) для инициализации списка файлов self.sys_files и
+        __get_files_from_db() для инициализации списка файлов в БД self.db_files. Используется в инициализаторе класса.
+        """
+
         if not self.con.row_factory:
             raise RuntimeError("Need dict factory")
         removed_files = []
@@ -126,7 +160,15 @@ class DbManager:
                 new_files.append((str(tuple_[0]), str(tuple_[1])))
         return new_files, removed_files
 
-    def __update_files(self, add: List, remove: List):
+    def __update_files(self, add: List, remove: List) -> None:
+        """
+        :param add: Список файлов для добавления в БД в формате List[Tuple['name', '\path\to\file'], ...]
+        :param remove: Список идентификаторов файлов для удаления в БД в формате List[str(id_file), ...]
+        :return: None
+
+        Метод для актуализации файлов в БД: требует предварительного запуска метода __get_db(*args) для инициализации
+        подключения self.con. Используется в инициализаторе класса.
+        """
         with self.con:
             cur = self.con.cursor()
             if remove:
@@ -135,8 +177,14 @@ class DbManager:
             for nf in add:
                 cur.execute("insert into files (name, path) values (?, ?)", nf)
 
-    def get_files_info(self):
-        """Получение информации о файлах с количеством дней (записей)"""
+    def get_files_info(self) -> List:
+        """
+        :return: Список файлов из БД в зависимости от фабрики ('tuple' или 'dict'), задаваемой через метод
+            __get_db(*args)
+
+        Получение информации о файлах с количеством дней (записей): получение идентификатора файла, имя файла,
+        путь к файлу, количество записей этого файла (сколько дней).
+        """
         with self.con:
             cur = self.con.cursor()
             cur.execute('select id_file, name, path, count(id) as cnt '
@@ -147,6 +195,20 @@ class DbManager:
     '1', '2', '3', '4', '5', '6', '7', '8', '9',
     '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
                       year: Union[str, int], day: Union[str, int, None] = None, priority: bool = False):
+        """
+        :param month: Месяц (от 1 до 12)
+        :param year: Год (yyyy)
+        :param day: День (опционально) указывается для сужения выборки до одного дня
+        :param priority: Поиск максимального приоритета, игнорируется, если день не указан
+        :return: Список записей из БД в зависимости от фабрики ('tuple' или 'dict'), задаваемой через метод
+            __get_db(*args), в случае, если priority=True возвращает кортеж/словарь в зависимости от фабрики,
+            содержащий одно значение - максимальный приоритет в выбранный день (в случае словаря по ключу 'm_priority').
+            Если день не указан, параметр priority будет проигнорирован.
+
+        Получение информации о привязке файлах к дате: получение идентификатора файла, имени файла,
+        пути к файлу, идентификатора записи о привязки файла и дня, даты привязки, приоритета привязки.
+        При установлении параметров day и priority=True - получение максимального приоритета файла в данный день
+        """
         month = f'{month:0>2}'
         year = str(year)
         with self.con:
@@ -168,7 +230,16 @@ class DbManager:
                         "where strftime('%m.%Y', fix_date) = :date order by priority", {'date': month + '.' + year})
             return cur.fetchall()
 
-    def add_new_days_file(self, date, file: dict):
+    def add_new_days_file(self, date, file: object):
+        """
+        :param date: Дата (yyyy-mm-dd)
+        :param file: Файл (Объект, имеющий атрибут id_file)
+
+        :return: Список записей из БД по соответствующей дате в зависимости от фабрики ('tuple' или 'dict'),
+            задаваемой через метод __get_db(*args).
+
+        Добавление новой привязки файла и дня в БД. Предоставление нового списка привязок ко дню.
+        """
         d = datetime.datetime.strptime(date, '%Y-%m-%d').timetuple()
         mon = d.tm_mon
         m_priority = self.get_days_info(mon, d.tm_year, d.tm_mday, priority=True)
@@ -179,7 +250,15 @@ class DbManager:
                         (file.id_file, date, m_priority + 1))
         return self.get_days_info(mon, d.tm_year, d.tm_mday)
 
-    def remove_day_file(self, date, id_file):
+    def remove_day_file(self, date, id_file) -> None:
+        """
+        :param date: Дата (yyyy-mm-dd)
+        :param id_file: Идентификатор файла
+
+        :return: None
+
+        Удаление привязки файла и дня в БД.
+        """
         with self.con:
             cur = self.con.cursor()
             cur.execute("delete from file_date "

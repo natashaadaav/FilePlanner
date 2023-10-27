@@ -36,7 +36,7 @@ exe = EXE(
 
 coll = COLLECT(
     exe, 
-    Tree('..\kivyCalendar'),
+    Tree('..\FileCalendar'),
 
     a.binaries,
     a.zipfiles,
