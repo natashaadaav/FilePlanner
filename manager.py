@@ -2,6 +2,9 @@ import datetime
 from sqlite3 import connect
 import os
 from typing import List, Tuple, Literal, Union
+import ctypes
+from ctypes import wintypes, windll
+
 
 
 def dict_factory(cursor, row):
@@ -64,6 +67,14 @@ class DbManager:
             desktop = os.path.join(home, 'Desktop')
             if not os.path.exists(desktop):
                 desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Рабочий стол')
+            if not os.path.exists(desktop):
+                CSIDL_DESKTOP = 0
+                _SHGetFolderPath = windll.shell32.SHGetFolderPathW
+                _SHGetFolderPath.argtypes = [wintypes.HWND, ctypes.c_int, wintypes.HANDLE, wintypes.DWORD,
+                                             wintypes.LPCWSTR]
+                path_buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
+                result = _SHGetFolderPath(0, CSIDL_DESKTOP, 0, 0, path_buf)
+                desktop = path_buf.value
         elif os.name == 'posix':
             home = os.path.join(os.path.expanduser('~'))
             desktop = os.path.join(home, 'Desktop')
