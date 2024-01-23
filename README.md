@@ -13,7 +13,7 @@ Run app:
 python interface.py
 ```
 
-## Create a package for Windows
+## Create a package
 
 Install PyInstaller:
 
